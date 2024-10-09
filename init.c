@@ -7,13 +7,24 @@
 #include <time.h>
 #define BUFFER_SIZE 4
 
-void init_process(int pipes[][2])
+// Function to wait for signal from scheduler
+void wait_for_scheduler(int sync_pipe)
+{
+    char signal;
+    read(sync_pipe, &signal, 1); // Wait for the signal from scheduler
+    close(sync_pipe);            // Close the reading end after receiving signal
+}
+
+void init_process(int pipes[][2], int sync_pipe)
 {
     int status;
     pid_t pid[BUFFER_SIZE];
     int generated_priorities[BUFFER_SIZE]; // Local buffer to hold generated priorities
     int shmid;
     int *shared_memory;
+
+    // Wait for the signal from scheduler before proceeding
+    wait_for_scheduler(sync_pipe);
 
     if ((shmid = shmget(12345, (BUFFER_SIZE + 1) * sizeof(int), 0666)) < 0)
     {

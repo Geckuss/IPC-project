@@ -9,7 +9,7 @@
 #define SHM_KEY 12345
 #define BUFFER_SIZE 4
 
-void scheduler()
+void scheduler(int sync_pipe)
 {
     int shmid;
     int *shared_memory;
@@ -27,6 +27,11 @@ void scheduler()
         perror("shmat failed");
         exit(1);
     }
+
+    // Signal the init process that shared memory is created
+    char signal = 'S';
+    write(sync_pipe, &signal, 1); // Send signal to init
+    close(sync_pipe);             // Close the pipe after sending signal
 
     printf("Scheduler: Waiting for data to be written to shared memory...\n");
     while (shared_memory[0] != 1) // Check if the flag is set

@@ -14,14 +14,14 @@ void scheduler()
     int shmid;
     int *shared_memory;
 
-    // Create shared memory segment
+    // Create shared memory segment with shmget (Criteria 2)
     if ((shmid = shmget(SHM_KEY, (BUFFER_SIZE + 1) * sizeof(int), IPC_CREAT | 0666)) < 0)
     {
         perror("shmget failed");
         exit(1);
     }
 
-    // Attach to the shared memory
+    // Attach to the shared memory with shmat (Criteria 2)
     if ((shared_memory = (int *)shmat(shmid, NULL, 0)) == (int *)-1)
     {
         perror("shmat failed");
@@ -34,21 +34,23 @@ void scheduler()
         // Busy-wait until the flag indicates data is ready
     }
 
-    // Sort the list of priorities
-    sort_priorities(shared_memory + 1, BUFFER_SIZE);
+    // Sort the list of priorities to ascending order with bubble sort or bogo sort :D (Criteria 2)
+    // sort_priorities(shared_memory + 1, BUFFER_SIZE);
+    bogo_sort(shared_memory + 1, BUFFER_SIZE);
     printf("Scheduler: Sorted list of priorities:\n");
 
-    // Print the sorted list one by one
+    // Print the sorted list one by one (Criteria 2)
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
         printf("Priority %d: %d\n", i + 1, shared_memory[i + 1]);
     }
     printf("Scheduler: Finished printing sorted priorities.\n");
 
-    // Detach shared memory
+    // Detach from shared memory (Termination)
     shmdt(shared_memory);
     printf("Scheduler: Detached from shared memory...\n");
 
-    // Delete shared memory segment
+    // Delete shared memory segment (Termination)
     shmctl(shmid, IPC_RMID, NULL);
+    printf("Scheduler: Shared memory deleted...\n");
 }

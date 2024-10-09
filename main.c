@@ -6,8 +6,8 @@
 #include <sys/shm.h>
 #define BUFFER_SIZE 4
 
-void init_process(int pipes[][2]); // Function prototype
-void scheduler();                  // Function prototype
+void init_process(int pipes[][2]);
+void scheduler(); // Scheduler is independent process (Criteria 2)
 
 int main()
 {

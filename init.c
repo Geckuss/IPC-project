@@ -15,35 +15,34 @@ void init_process(int pipes[][2])
     int shmid;
     int *shared_memory;
 
-    // Attach to the shared memory created by the scheduler
     if ((shmid = shmget(12345, (BUFFER_SIZE + 1) * sizeof(int), 0666)) < 0)
     {
         perror("shmget failed");
         exit(1);
     }
 
+    // Attach to the shared memory created by the scheduler using shmat (Criteria 3)
     if ((shared_memory = (int *)shmat(shmid, NULL, 0)) == (int *)-1)
     {
         perror("shmat failed");
         exit(1);
     }
 
-    // Fork child processes P1-P4
+    // Fork child processes P1-P4 (Criteria 1)
     printf("Init: Starting to fork child processes P1 to P4...\n");
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
-        if ((pid[i] = fork()) == 0)
-        {                       // Child process
-            close(pipes[i][0]); // Close reading end of pipe
+        if ((pid[i] = fork()) == 0) // Use fork (Criteria 1)
+        {                           // Child process
+            close(pipes[i][0]);     // Close reading end of pipe
 
-            // Generate random number between 0-19
+            // Generate random number between 0-19 (Criteria 1)
             srand(time(NULL) + getpid()); // Seed with time and process ID
             int priority = rand() % 20;
 
-            // Print the generated priority
             printf("P%d: Generated priority = %d\n", i + 1, priority);
 
-            // Send random number to init process via pipe
+            // Send random number to init process via pipe (Criteria 1)
             write(pipes[i][1], &priority, sizeof(priority));
             close(pipes[i][1]); // Close writing end of pipe
             exit(0);            // Child process exits
@@ -55,7 +54,7 @@ void init_process(int pipes[][2])
     {
         close(pipes[i][1]); // Close writing end of pipe in parent
 
-        // Read priority number sent by child processes
+        // Read priority number sent by child processes (Criteria 1)
         int priority;
         read(pipes[i][0], &priority, sizeof(priority));
         close(pipes[i][0]); // Close reading end of pipe
@@ -67,7 +66,7 @@ void init_process(int pipes[][2])
         waitpid(pid[i], &status, 0);
     }
 
-    // Write the generated priorities to shared memory
+    // Write the generated numbers to shared memory (Criteria 3)
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
         printf("Init: Writing priority %d to shared memory...\n", generated_priorities[i]);
@@ -76,6 +75,6 @@ void init_process(int pipes[][2])
 
     shared_memory[0] = 1; // Set flag to 1 (data is ready)
 
-    // Detach shared memory
+    // Detach from shared memory (Termination)
     shmdt(shared_memory);
 }

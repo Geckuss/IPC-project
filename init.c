@@ -11,13 +11,12 @@ void init_process(int pipes[][2])
 {
     int status;
     pid_t pid[BUFFER_SIZE];
+    int generated_priorities[BUFFER_SIZE]; // Local buffer to hold generated priorities
     int shmid;
     int *shared_memory;
 
-    sleep(1); // Wait for scheduler to create shared memory
-
     // Attach to the shared memory created by the scheduler
-    if ((shmid = shmget(12345, BUFFER_SIZE * sizeof(int), 0666)) < 0)
+    if ((shmid = shmget(12345, (BUFFER_SIZE + 1) * sizeof(int), 0666)) < 0)
     {
         perror("shmget failed");
         exit(1);
@@ -61,13 +60,21 @@ void init_process(int pipes[][2])
         read(pipes[i][0], &priority, sizeof(priority));
         close(pipes[i][0]); // Close reading end of pipe
 
-        // Store the received priority in shared memory
-        shared_memory[i] = priority;
-        printf("Init: Writing priority %d to shared memory...\n", shared_memory[i]);
+        // Store the received priority in local buffer
+        generated_priorities[i] = priority;
 
         // Wait for child processes to finish
         waitpid(pid[i], &status, 0);
     }
+
+    // Write the generated priorities to shared memory
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+        printf("Init: Writing priority %d to shared memory...\n", generated_priorities[i]);
+        shared_memory[i + 1] = generated_priorities[i];
+    }
+
+    shared_memory[0] = 1; // Set flag to 1 (data is ready)
 
     // Detach shared memory
     shmdt(shared_memory);

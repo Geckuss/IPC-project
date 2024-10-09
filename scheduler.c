@@ -15,7 +15,7 @@ void scheduler()
     int *shared_memory;
 
     // Create shared memory segment
-    if ((shmid = shmget(SHM_KEY, BUFFER_SIZE * sizeof(int), IPC_CREAT | 0666)) < 0)
+    if ((shmid = shmget(SHM_KEY, (BUFFER_SIZE + 1) * sizeof(int), IPC_CREAT | 0666)) < 0)
     {
         perror("shmget failed");
         exit(1);
@@ -29,18 +29,19 @@ void scheduler()
     }
 
     printf("Scheduler: Waiting for data to be written to shared memory...\n");
-
-    // Sleep to simulate the scheduler waiting for data
-    sleep(2); // Ensure init has time to write data
+    while (shared_memory[0] != 1) // Check if the flag is set
+    {
+        // Busy-wait until the flag indicates data is ready
+    }
 
     // Sort the list of priorities
-    sort_priorities(shared_memory, BUFFER_SIZE);
+    sort_priorities(shared_memory + 1, BUFFER_SIZE);
     printf("Scheduler: Sorted list of priorities:\n");
 
     // Print the sorted list one by one
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
-        printf("Priority %d: %d\n", i + 1, shared_memory[i]);
+        printf("Priority %d: %d\n", i + 1, shared_memory[i + 1]);
     }
     printf("Scheduler: Finished printing sorted priorities.\n");
 
